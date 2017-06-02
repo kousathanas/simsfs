@@ -3,7 +3,7 @@ Generate allele frequency vectors (AFVs) using Wright-Fisher transition matrix m
 
   Features:   
   Demography: 1-epoch or 2-epoch population changes  
-  Selection: only single s due to computational constraints (see Multi_gen for more complex selection types, this uses pre-computed tables for the allele frequency vector).  
+  Selection: only single s due to computational constraints (see Multi_DFE_gen for more complex selection types, this uses pre-computed tables for generating the allele frequency vector).  
 
   Compilation:    
   use makefile or compile as  
