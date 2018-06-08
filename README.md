@@ -20,14 +20,15 @@ will sample 10 alleles from an equilibrium population of size N1 for 10,000 neut
 
 ###Options
 
-option	default_value	description
-N1	100	size N1
-N2	100	size N2
-t	100	time since size change
-n	10	allele sample size
-f0	0.9	1-f0 is proportional to mutation rate
-s	0	selection coeffient
-LS	1000	no. neutral sites
-LN	1000	no. selected sites
-o	sfs.out	output file
-seed	time*pid	set seed for random generator
+| option | default_value | description                           |
+|--------|---------------|---------------------------------------|
+| N1     | 100           | size N1                               |
+| N2     | 100           | size N2                               |
+| t      | 100           | time since size change                |
+| n      | 10            | allele sample size                    |
+| f0     | 0.9           | 1-f0 is proportional to mutation rate |
+| s      | 0             | selection coeffient                   |
+| LS     | 1000          | no. neutral sites                     |
+| LN     | 1000          | no. selected sites                    |
+| o      | sfs.out       | output file                           |
+| seed   | time*pid      | set seed for random generator         |
