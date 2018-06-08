@@ -33,196 +33,6 @@
 */
 
 
-/*
-////////////////////////////////////////
-MAIN START
-////////////////////////////////////////
-*/
-
-int main(int argc, char **argv)
-{
-
-  //initialise input variables and use default values
-  int N1=100,n=10,sampleS=1000,sampleN=1000;
-  int N2=N1;
-  int t=N1;
-  double f0=0.9,S=0;
-  char outfile[maxnd+1]="sfs.out";
-  long seed=time (NULL) * getpid();
- 
-  //other variables
-  int option_index = 0;
-  int c=0;
-  static int verbose_flag;
-
-  const gsl_rng_type * T;
-  T = gsl_rng_taus;  
-  gsl_rng  *rgen =gsl_rng_alloc(T);
-  gsl_rng_set(rgen,seed);
-
-  int * discrete0 = (int*) calloc (maxnd+1, sizeof(int));
-  int * discrete1 = (int*) calloc (maxnd+1, sizeof(int));
-
-  double * FV0 = (double*) calloc (maxnd+1, sizeof(double));
-  double * FVS = (double*) calloc (maxnd+1, sizeof(double));
-
-
-  //parse input
-  while (1)
-    {
-
-      static struct option long_options[] =
-	{
-	  {"h",no_argument,  &verbose_flag, 1},
-	  {"N1",     required_argument,0, 'a'},
-	  {"N2",  required_argument,0, 'b'},
-	  {"n",  required_argument, 0, 'c'},
-	  {"f0",  required_argument, 0, 'd'},
-	  {"s",    required_argument, 0, 'e'},
-	  {"LS",    required_argument, 0, 'f'},
-	  {"LN",    required_argument, 0, 'g'},
-	  {"t",    required_argument, 0, 'h'},
-	  {"o",    required_argument, 0, 'i'},
-	  {"seed",    required_argument, 0, 'j'},	  
-	  {NULL, 0, 0, 0}
-	};
-      /* getopt_long stores the option index here. */
-      c = getopt_long_only (argc, argv, "",
-			    long_options, &option_index);
-     
-      /* Detect the end of the options. */
-      if (c == -1)
-	break;
-     
-      switch (c)
-	{
-	case 0:
-	  /* If this option set a flag, do nothing else now. */
-	  if (long_options[option_index].flag != 0)
-	    {
-	      printf("\
-option\tdefault_value\tdescription\n\
-N1\t100\tsize N1\n\
-N2\t100\tsize N2\n\
-t\t100\ttime since size change\n\
-n\t10\tallele sample size\n\
-f0\t0.9\t1-f0 is proportional to mutation rate\n\
-s\t0\tselection coeffient\n\
-LS\t1000\tno. neutral sites\n\
-LN\t1000\tno. selected sites\n\
-o\tsfs.out\toutput file\n\
-seed\ttime*pid\tset seed for random generator\n\
-");
-	    }
-	  break;
-	  printf ("option %s", long_options[option_index].name);
-	  if (optarg)
-	    printf (" with arg %s", optarg);
-	  printf ("\n");
-	  break;
-
-	case 'a':
-	  N1=atoi(optarg);
-	  break;   
-	case 'b':
-	  N2=atoi(optarg);
-	  break;     
-	case 'c':
-	  n=atoi(optarg);
-	  break;     
-	case 'd':
-	  f0=atof(optarg);
-	  break;     
-	case 'e':
-	  S=atof(optarg);
-	  break;
-	case 'f':
-	  sampleS=atoi(optarg);
-	  break;
-	case 'g':
-	  sampleN=atoi(optarg);
-	  break;
-	case 'h':
-	  t=atoi(optarg);
-	  break;
-	case 'i':
-	  strncpy(outfile,optarg,maxnd+1);
-	  break;  
-	case 'j':
-	  seed=atoi(optarg);
-	  gsl_rng_set(rgen,seed);	  
-	  break;  
-	case '?':
-	  abort();
-	  break;
-	default:
-	  abort ();
-	}
-    }
-
-  if (optind < argc)
-    {
-      printf ("non-option ARGV-elements: ");
-      while (optind < argc)
-	printf ("%s ", argv[optind++]);
-      putchar ('\n');
-    }
-    
-  if (N1>1000||N2>1000){printf ("Use N1,N2 <1000\n"); abort();}
-  /*
-    calculate allele frequency vectors for neutral (FV0)
-    and selected sites (FVS)
-  */
-  if (N1==N2){
-    calculate_FV_one_epoch(N1,0.0,FV0);
-    calculate_FV_one_epoch(N1,S,FVS);
-  }else{
-    calculate_FV_two_epoch(N1,N2,t,0.0,FV0);
-    calculate_FV_two_epoch(N1,N2,t,S,FVS);
-  }
-
-  /*
-    scale FVS to include the frequency of sites at which mutations
-    have been eliminated by selection or have not experienced a mutation
-  */
-  egf_scaling_s(N2,FV0,FVS, f0);
-  egf_scaling_f0(N2,FVS,f0);
-
-  /*
-    scale FV0 to account for sites that have never experienced a mutation.
-  */
-  egf_scaling_s(N2,FV0, FV0,f0);
-  egf_scaling_f0(N2,FV0,f0);
-
-
-  /*sampling
-    sample sampleN neutral sites from FV0
-    sample sampleS selected sites from FVS
-  */
-
-  binomial_sampling(N2,n,sampleN,FV0,discrete0,rgen);
-  binomial_sampling(N2,n,sampleS, FVS,discrete1,rgen);
-
-  output_sfs_to_file(n,discrete0,discrete1,outfile,seed);
-
-  //free vectors
-  free(FV0);
-  free(FVS);
-
-  free(discrete0);
-  free(discrete1);
-
-  gsl_rng_free (rgen);
-
-  return 0;
-}
-
-/*
-////////////////////////////////////////
-END OF MAIN
-////////////////////////////////////////
-*/
-
 ////////////////////////////////////////
 //calculate allele frequency change, delta(q)
 ////////////////////////////////////////
@@ -621,3 +431,196 @@ dumpvector(double *v, int min, int max, char *s){
     }
   printf("\n");
 }
+
+
+
+
+/*
+////////////////////////////////////////
+MAIN START
+////////////////////////////////////////
+*/
+
+int main(int argc, char **argv)
+{
+
+  //initialise input variables and use default values
+  int N1=100,n=10,sampleS=1000,sampleN=1000;
+  int N2=N1;
+  int t=N1;
+  double f0=0.9,S=0;
+  char outfile[maxnd+1]="sfs.out";
+  long seed=time (NULL) * getpid();
+
+  //other variables
+  int option_index = 0;
+  int c=0;
+  static int verbose_flag;
+
+  const gsl_rng_type * T;
+  T = gsl_rng_taus;
+  gsl_rng  *rgen =gsl_rng_alloc(T);
+  gsl_rng_set(rgen,seed);
+
+  int * discrete0 = (int*) calloc (maxnd+1, sizeof(int));
+  int * discrete1 = (int*) calloc (maxnd+1, sizeof(int));
+
+  double * FV0 = (double*) calloc (maxnd+1, sizeof(double));
+  double * FVS = (double*) calloc (maxnd+1, sizeof(double));
+
+
+  //parse input
+  while (1)
+    {
+
+      static struct option long_options[] =
+	{
+	  {"h",no_argument,  &verbose_flag, 1},
+	  {"N1",     required_argument,0, 'a'},
+	  {"N2",  required_argument,0, 'b'},
+	  {"n",  required_argument, 0, 'c'},
+	  {"f0",  required_argument, 0, 'd'},
+	  {"s",    required_argument, 0, 'e'},
+	  {"LS",    required_argument, 0, 'f'},
+	  {"LN",    required_argument, 0, 'g'},
+	  {"t",    required_argument, 0, 'h'},
+	  {"o",    required_argument, 0, 'i'},
+	  {"seed",    required_argument, 0, 'j'},
+	  {NULL, 0, 0, 0}
+	};
+      /* getopt_long stores the option index here. */
+      c = getopt_long_only (argc, argv, "",
+			    long_options, &option_index);
+
+      /* Detect the end of the options. */
+      if (c == -1)
+	break;
+
+      switch (c)
+	{
+	case 0:
+	  /* If this option set a flag, do nothing else now. */
+	  if (long_options[option_index].flag != 0)
+	    {
+	      printf("\
+option\tdefault_value\tdescription\n\
+N1\t100\tsize N1\n\
+N2\t100\tsize N2\n\
+t\t100\ttime since size change\n\
+n\t10\tallele sample size\n\
+f0\t0.9\t1-f0 is proportional to mutation rate\n\
+s\t0\tselection coeffient\n\
+LS\t1000\tno. neutral sites\n\
+LN\t1000\tno. selected sites\n\
+o\tsfs.out\toutput file\n\
+seed\ttime*pid\tset seed for random generator\n\
+");
+	    }
+	  break;
+	  printf ("option %s", long_options[option_index].name);
+	  if (optarg)
+	    printf (" with arg %s", optarg);
+	  printf ("\n");
+	  break;
+
+	case 'a':
+	  N1=atoi(optarg);
+	  break;
+	case 'b':
+	  N2=atoi(optarg);
+	  break;
+	case 'c':
+	  n=atoi(optarg);
+	  break;
+	case 'd':
+	  f0=atof(optarg);
+	  break;
+	case 'e':
+	  S=atof(optarg);
+	  break;
+	case 'f':
+	  sampleS=atoi(optarg);
+	  break;
+	case 'g':
+	  sampleN=atoi(optarg);
+	  break;
+	case 'h':
+	  t=atoi(optarg);
+	  break;
+	case 'i':
+	  strncpy(outfile,optarg,maxnd+1);
+	  break;
+	case 'j':
+	  seed=atoi(optarg);
+	  gsl_rng_set(rgen,seed);
+	  break;
+	case '?':
+	  abort();
+	  break;
+	default:
+	  abort ();
+	}
+    }
+
+  if (optind < argc)
+    {
+      printf ("non-option ARGV-elements: ");
+      while (optind < argc)
+	printf ("%s ", argv[optind++]);
+      putchar ('\n');
+    }
+
+  if (N1>1000||N2>1000){printf ("Use N1,N2 <1000\n"); abort();}
+  /*
+    calculate allele frequency vectors for neutral (FV0)
+    and selected sites (FVS)
+  */
+  if (N1==N2){
+    calculate_FV_one_epoch(N1,0.0,FV0);
+    calculate_FV_one_epoch(N1,S,FVS);
+  }else{
+    calculate_FV_two_epoch(N1,N2,t,0.0,FV0);
+    calculate_FV_two_epoch(N1,N2,t,S,FVS);
+  }
+
+  /*
+    scale FVS to include the frequency of sites at which mutations
+    have been eliminated by selection or have not experienced a mutation
+  */
+  egf_scaling_s(N2,FV0,FVS, f0);
+  egf_scaling_f0(N2,FVS,f0);
+
+  /*
+    scale FV0 to account for sites that have never experienced a mutation.
+  */
+  egf_scaling_s(N2,FV0, FV0,f0);
+  egf_scaling_f0(N2,FV0,f0);
+
+
+  /*sampling
+    sample sampleN neutral sites from FV0
+    sample sampleS selected sites from FVS
+  */
+
+  binomial_sampling(N2,n,sampleN,FV0,discrete0,rgen);
+  binomial_sampling(N2,n,sampleS, FVS,discrete1,rgen);
+
+  output_sfs_to_file(n,discrete0,discrete1,outfile,seed);
+
+  //free vectors
+  free(FV0);
+  free(FVS);
+
+  free(discrete0);
+  free(discrete1);
+
+  gsl_rng_free (rgen);
+
+  return 0;
+}
+
+/*
+////////////////////////////////////////
+END OF MAIN
+////////////////////////////////////////
+*/
