@@ -2,6 +2,10 @@
 Generate allele frequency vectors (AFVs) using Wright-Fisher transition matrix methods and sample
   to obtain site frequency spectra (SFS). Code implements methods described by Keightley and Eyre-Walker(2007).
 
+## Citation
+If you use this software to generate data for your publication please cite: 
+Kousathanas & Keightley (2013). https://doi.org/10.1534/genetics.112.148023
+
 ## Features:   
   Demography: 1-epoch or 2-epoch population changes  
   Selection: only single s due to computational constraints (see Multi_DFE_gen for more complex selection types, this uses pre-computed tables for generating the allele frequency vector).  
@@ -14,6 +18,7 @@ Generate allele frequency vectors (AFVs) using Wright-Fisher transition matrix m
 Alternatively, you can also type  
 make
 
+Software has only been compiled and tested in linux systems.
 
 ## How to run:
   Run the program as ./simSFS and provide arguments with '-'. You can use switch -h to print all possible arguments and description.
