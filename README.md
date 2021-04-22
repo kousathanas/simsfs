@@ -8,7 +8,7 @@ Kousathanas & Keightley (2013). https://doi.org/10.1534/genetics.112.148023
 
 ## Features:   
   Demography: 1-epoch or 2-epoch population changes  
-  Selection: only single s due to computational constraints (see Multi_DFE_gen for more complex selection types, this uses pre-computed tables for generating the allele frequency vector).  
+  Selection: only single s due to computational constraints (see Multi_DFE_gen in simsfs_fast repository for more complex selection types, this uses pre-computed tables for generating the allele frequency vector).  
 
 ## How to install:
   Unpack, cd to the unpacked directory and then compile with this command:
